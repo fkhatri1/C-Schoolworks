@@ -1,0 +1,223 @@
+// JavaScript Document
+//MCCCD Canvas JavaScript Overrides
+//Test revision 09/16/2016 
+
+/*EvaluationKIT START*/
+var evalkit_jshosted = document.createElement('script');
+evalkit_jshosted.setAttribute('type', 'text/javascript');
+evalkit_jshosted.setAttribute('src', 'https://mesacc.evaluationkit.com/CanvasScripts/mesacc.js?v=2');
+document.getElementsByTagName('head')[0].appendChild(evalkit_jshosted); /*EvaluationKIT END*/
+
+//Customize the forgot password link to MCCCD support
+$("#login_forgot_password").attr("href", "https://tools.maricopa.edu/Support/ResetPassword");
+
+//Customize the 24x7 call support number 
+var call_support_msg = "24x7 Toll Free Support Line: 1-888-994-4433";
+$("#footer").prepend("<div style='font-color:#fff;margin-right:20px'>" + call_support_msg + "</div>");
+
+// Display a badge with a message on the login page. Comment out when not needed
+/* var important_msg = "<strong>ATTENTION FACULTY AND STAFF: </strong>MCCCD has executed an automated password change for ALL faculty and staff accounts. If you did <em>not</em> complete the password reset process between 7/25/2016 and 8/1/2016, please <a style='font-weight:bold;color:#fff;' href='https://tools.maricopa.edu/Support/ResetPassword' target='blank'>follow this link to reset your account to a new password.</a>" 
+$("#footer").append("<div style='background-color:#f00;color:#fff;padding:10px;border-radius:10px'>" + important_msg + "</div>"); */
+
+//For campus library menu item
+var myLibrary = null;
+//This function adds custom menu items to the left-hand nav in new Canvas UI
+function addMenuItem(linkText, linkhref, icon, target) {
+    'use strict';
+    var iconHtml = '',
+        itemHtml,
+        linkId = linkText.split(' ').join('_');
+    if (icon !== '') {
+        iconHtml = '<i class="' + icon + '"></i> ';
+    }
+    itemHtml = '<li class="menu-item ic-app-header__menu-list-item ">' +
+        '  <a id="global_nav_' + linkId + '" href="' + linkhref + '" class="ic-app-header__menu-list-link" target="' + target + '">' +
+        '       <div class="menu-item__text">' + iconHtml + linkText + '</div>' +
+        '  </a>' +
+        '</li>';
+    $('#menu').append(itemHtml);
+
+}
+
+//Campus Library Detection 
+(function() {
+    var menu = $('#menu');
+    if (!menu.length) return;
+    var libraryCount = 0;
+    var libraries = {
+        'PC': {
+            'name': 'Phoenix',
+            'url': 'http://www.phoenixcollege.edu/library'
+        },
+        'GC': {
+            'name': 'Glendale',
+            'url': 'https://lib.gccaz.edu/lmc/index.cfm'
+        },
+        'GW': {
+            'name': 'GateWay',
+            'url': 'http://www.gatewaycc.edu/library'
+        },
+        'MC': {
+            'name': 'Mesa',
+            'url': 'http://www.mesacc.edu/library'
+        },
+        'SC': {
+            'name': 'Scottsdale',
+            'url': 'http://library.scottsdalecc.edu/index'
+        },
+        'SM': {
+            'name': 'South Mountain',
+            'url': 'http://libguides.southmountaincc.edu/home'
+        },
+        'RIO': {
+            'name': 'Rio',
+            'url': 'http://www.riosalado.edu/library'
+        },
+        'CG': {
+            'name': 'Chandler-Gilbert',
+            'url': 'http://www.cgc.maricopa.edu/library'
+        },
+        'PV': {
+            'name': 'Paradise Valley',
+            'url': 'http://www.pvc.maricopa.edu/library/'
+        },
+        'EM': {
+            'name': 'Estrella Mountain',
+            'url': 'http://www.estrellamountain.edu/library'
+        },
+        '': {
+            'name': 'Maricopa Libraries',
+            'url': 'http://libguides.maricopa.edu'
+        }
+    };
+
+    function markLibrary(name) {
+        if (name === null) {
+            name = '';
+        } else {
+            name = name.trim().replace(/[. ].*$/g, '').replace(/^(..)CC?$/, '$1');
+            if (name == '') {
+                return;
+            }
+        }
+
+        if (name in libraries) {
+            var library = libraries[name];
+            if (library.enrolled) {
+                library.enrolled++;
+            } else {
+                library.enrolled = 1;
+                libraryCount++;
+            }
+            if (myLibrary === null || myLibrary.enrolled < library.enrolled) {
+                myLibrary = library;
+            }
+        }
+    }
+	// Look for library from course name
+	if (document.getElementById('section-tabs-header-subtitle') !== null) {
+		var courseTitle = document.getElementById('section-tabs-header-subtitle').innerHTML;
+		markLibrary(courseTitle);
+	}
+
+    // If we didn't find a college based on this course, find the college
+    // with the highest enrollment by iterating over the Dashboard courses object
+    var coursesObj = ENV["DASHBOARD_COURSES"];
+    for (course in coursesObj) {
+        //console.log(course.originalName);
+        if (coursesObj.hasOwnProperty(course)) {
+            markLibrary(coursesObj[course].originalName);
+        }
+    }
+	if (myLibrary != null) {
+		addMenuItem('Library', myLibrary.url, 'icon-document', '_blank');
+	} else {
+		addMenuItem('Library', 'http://libguides.maricopa.edu', 'icon-document', '_blank');
+	}
+})();
+// Canvabadges begin
+$(function() {
+    console.log("CANVABADGES: Loaded!");
+    // NOTE: if pasting this code into another script, you'll need to manually change the  
+    // next line. Instead of assigning the value null, you need to assign the value of  
+    // the Canvabadges domain, i.e. "https://www.canvabadges.org". If you have a custom  
+    // domain configured then it'll be something like "https://www.canvabadges.org/_my_site"  
+    // instead.  
+    var protocol_and_host = "https://www.canvabadges.org";
+    if (!protocol_and_host) {
+        var $scripts = $("script");
+        $("script").each(function() {
+            var src = $(this).attr('src');
+            if (src && src.match(/canvas_profile_badges/)) {
+                var splits = src.split(/\//);
+                protocol_and_host = splits[0] + "//" + splits[2];
+            }
+            var prefix = src && src.match(/\?path_prefix=\/(\w+)/);
+            if (prefix && prefix[1]) {
+                protocol_and_host = protocol_and_host + "/" + prefix[1];
+            }
+        });
+    }
+    if (!protocol_and_host) {
+        console.log("CANVABADGES: Couldn't find a valid protocol and host. Canvabadges will not appear on profile pages until this is fixed.");
+    }
+    var match = location.href.match(/\/(users|about)\/(\d+)$/);
+    var profileMatch = location.href.match(/\/(profile)$/);
+    var userID = ENV.current_user_id;
+    if (match) {
+        var urlParts = location.href.split('/');
+        userID = urlParts[urlParts.length - 1];
+    }
+    if ((match || profileMatch) && protocol_and_host) {
+        console.log("CANVABADGES: This page shows badges! Loading...");
+        var domain = location.host;
+        var url = protocol_and_host + "/api/v1/badges/public/" + userID + "/" + encodeURIComponent(domain) + ".json";
+        $.ajax({
+            type: 'GET',
+            dataType: 'jsonp',
+            url: url,
+            success: function(data) {
+                console.log("CANVABADGES: Data retrieved!");
+                if (data.objects && data.objects.length > 0) {
+                    console.log("CANVABADGES: Badges found! Adding to the page...");
+                    var $box = $("<div/>", {
+                        style: 'margin-bottom: 20px;'
+                    });
+                    $box.append("<h2 class='border border-b'>Badges</h2>");
+                    for (idx in data.objects) {
+                        var badge = data.objects[idx];
+                        var $badge = $("<div/>", {
+                            style: 'float: left;'
+                        });
+                        var link = protocol_and_host + "/badges/criteria/" + badge.config_id + "/" + badge.config_nonce + "?user=" + badge.nonce;
+                        var $a = $("<a/>", {
+                            href: link
+                        });
+                        $a.append($("<img/>", {
+                            src: badge.image_url,
+                            style: 'width: 72px; height: 72px; padding-right: 10px;'
+                        }));
+                        $badge.append($a);
+                        $box.append($badge);
+                    }
+                    $box.append($("<div/>", {
+                        style: 'clear: left'
+                    }));
+                    $("#edit_profile_form,fieldset#courses,.more_user_information + div").after($box);
+                } else {
+                    console.log("CANVABADGES: No badges found for the user: " + ENV.current_user_id + " at " + domain);
+                }
+            },
+            error: function(err) {
+                console.log("CANVABADGES: Badges failed to load, API error response");
+                console.log(err);
+            },
+            timeout: 5000
+        });
+    } else {
+        console.log("CANVABADGES: This page doesn't show badges");
+    }
+});
+
+//Adds log-out custom menu item 
+addMenuItem('Logout', '/logout', 'icon-off', '_self');
